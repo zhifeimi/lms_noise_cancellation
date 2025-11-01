@@ -72,13 +72,13 @@ This will verify that the LMS filter implementation works correctly.
 
 ## Algorithm Parameters
 
-- **filter_length**: Number of filter coefficients (default: 32)
+- **filter_length**: Number of filter coefficients (default: 10)
   - Higher values allow modeling more complex noise patterns
   - Too high may cause slow convergence or overfitting
 
-- **step_size (μ)**: Learning rate (default: 0.01)
+- **step_size (μ)**: Learning rate (default: 0.1 for normalized LMS)
   - Controls convergence speed and stability
-  - Must be: 0 < μ < 1
+  - For normalized LMS: 0 < μ < 2
   - Smaller values: slower convergence, more stable
   - Larger values: faster convergence, may be unstable
 
