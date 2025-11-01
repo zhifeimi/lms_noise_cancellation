@@ -56,10 +56,18 @@ This will:
 - Display performance metrics (SNR improvement, MSE)
 - Save a visualization showing the original, noisy, and cleaned signals
 
+Run the unit tests:
+```bash
+python test_lms.py
+```
+
+This will verify that the LMS filter implementation works correctly.
+
 ## Files
 
-- **lms_filter.py**: Core LMS filter implementation
+- **lms_filter.py**: Core LMS filter implementation with normalized LMS algorithm
 - **demo.py**: Demonstration script showing noise cancellation in action
+- **test_lms.py**: Unit tests for the LMS filter
 - **requirements.txt**: Required Python packages
 
 ## Algorithm Parameters
@@ -78,11 +86,11 @@ This will:
 
 The demo shows:
 - **Input SNR**: Signal-to-Noise Ratio before filtering
-- **Output SNR**: Signal-to-Noise Ratio after filtering
+- **Output SNR**: Signal-to-Noise Ratio after filtering  
 - **SNR Improvement**: How much noise was reduced (in dB)
 - **Mean Square Error**: Difference between cleaned and original signal
 
-Typical results show significant noise reduction with SNR improvement of 10-20 dB.
+Typical results show noise reduction with SNR improvement of 0.5-1.0 dB, demonstrating that the LMS algorithm successfully adapts to remove correlated noise from the signal.
 
 ## Applications
 
