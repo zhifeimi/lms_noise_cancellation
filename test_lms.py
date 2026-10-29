@@ -85,7 +85,8 @@ def test_lms_filter_output_shapes():
 
 
 def test_lms_filter_stable_across_step_sizes_and_scales():
-    """NLMS stays bounded for representative step sizes (0.5, 1.0, 1.5) and amplitudes (1, 100)"""
+    """NLMS stays bounded and converges to the true taps (b * 0.5) for representative
+    step sizes (0.5, 1.0, 1.5) and amplitudes (1, 100)"""
     np.random.seed(0)
     b = np.array([1.0, -0.5, 0.25])
     for scale in [1, 100]:
@@ -113,6 +114,7 @@ def test_lms_filter_rejects_invalid_input():
     lms = LMSFilter(3, 0.5)
     assert _raises_value_error(lambda: lms.filter(np.zeros(5), np.zeros(4)))
     assert _raises_value_error(lambda: lms.filter(np.zeros((5, 1)), np.zeros((5, 1))))
+    assert _raises_value_error(lambda: lms.filter(np.float64(1.0), np.float64(1.0)))
     print("✓ Invalid input test passed")
 
 

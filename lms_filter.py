@@ -23,7 +23,7 @@ class LMSFilter:
         Number of filter coefficients (filter order)
     step_size : float
         Learning rate (mu), controls convergence speed and stability
-        For normalized LMS, typical range: 0 < mu < 2
+        Must satisfy 0 < mu < 2 (ValueError otherwise)
     """
     
     def __init__(self, filter_length, step_size):
