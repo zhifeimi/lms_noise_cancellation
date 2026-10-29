@@ -85,7 +85,7 @@ def test_lms_filter_output_shapes():
 
 
 def test_lms_filter_stable_across_step_sizes_and_scales():
-    """NLMS must stay bounded for any 0 < mu < 2, regardless of signal amplitude"""
+    """NLMS stays bounded for representative step sizes (0.5, 1.0, 1.5) and amplitudes (1, 100)"""
     np.random.seed(0)
     b = np.array([1.0, -0.5, 0.25])
     for scale in [1, 100]:
@@ -98,6 +98,24 @@ def test_lms_filter_stable_across_step_sizes_and_scales():
     print("✓ Stability test passed")
 
 
+def _raises_value_error(fn):
+    try:
+        fn()
+    except ValueError:
+        return True
+    return False
+
+
+def test_lms_filter_rejects_invalid_input():
+    """Bad constructor arguments and mismatched / non-1-D signals raise ValueError"""
+    for filter_length, step_size in [(0, 0.1), (2.5, 0.1), (10, 0), (10, 2), (10, -0.1)]:
+        assert _raises_value_error(lambda: LMSFilter(filter_length, step_size)), (filter_length, step_size)
+    lms = LMSFilter(3, 0.5)
+    assert _raises_value_error(lambda: lms.filter(np.zeros(5), np.zeros(4)))
+    assert _raises_value_error(lambda: lms.filter(np.zeros((5, 1)), np.zeros((5, 1))))
+    print("✓ Invalid input test passed")
+
+
 if __name__ == "__main__":
     print("Running LMS Filter Tests...")
     print()
@@ -106,6 +124,7 @@ if __name__ == "__main__":
     test_lms_filter_output_shapes()
     test_lms_filter_convergence()
     test_lms_filter_stable_across_step_sizes_and_scales()
+    test_lms_filter_rejects_invalid_input()
 
     print()
     print("All tests passed! ✓")

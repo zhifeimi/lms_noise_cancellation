@@ -5,6 +5,8 @@ This module implements the LMS algorithm for adaptive filtering, commonly used
 in noise cancellation applications.
 """
 
+import numbers
+
 import numpy as np
 
 
@@ -29,9 +31,16 @@ class LMSFilter:
         Initialize the LMS filter
         
         Args:
-            filter_length: Number of filter taps
-            step_size: Learning rate (mu)
+            filter_length: Number of filter taps (integer >= 1)
+            step_size: Learning rate (mu), 0 < mu < 2
+
+        Raises:
+            ValueError: if filter_length or step_size is out of range
         """
+        if not isinstance(filter_length, numbers.Integral) or filter_length < 1:
+            raise ValueError("filter_length must be an integer >= 1")
+        if not 0 < step_size < 2:
+            raise ValueError("step_size must satisfy 0 < step_size < 2")
         self.filter_length = filter_length
         self.step_size = step_size
         self.weights = np.zeros(filter_length)
@@ -41,13 +50,16 @@ class LMSFilter:
         Apply Normalized LMS adaptive filtering
         
         Args:
-            reference: Reference signal (noise reference)
-            desired: Desired signal (noisy signal to be cleaned)
-            
+            reference: 1-D reference signal (noise reference)
+            desired: 1-D desired signal (noisy signal to be cleaned), same length as reference
+
         Returns:
             error: Error signal (cleaned signal)
             output: Filter output (estimated noise)
             weights_history: Evolution of filter weights
+
+        Raises:
+            ValueError: if reference and desired are not 1-D arrays of equal length
         """
         reference = np.asarray(reference, dtype=float)
         desired = np.asarray(desired, dtype=float)

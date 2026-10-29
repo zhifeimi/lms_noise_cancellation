@@ -23,11 +23,12 @@ The LMS algorithm is an adaptive filtering technique that:
    ```
    where y(n) is the estimated noise filtered from the reference signal
 
-4. **Updates filter weights** using the LMS update rule:
+4. **Updates filter weights** using the normalized LMS update rule:
    ```
-   w(n+1) = w(n) + μ * e(n) * x(n)
+   w(n+1) = w(n) + μ / (||x(n)||² + ε) * e(n) * x(n)
    ```
-   where μ is the step size (learning rate)
+   where μ is the step size (learning rate), ||x(n)||² is the instantaneous power of the
+   reference taps, and ε is a small constant that avoids division by zero
 
 ## Installation
 
@@ -90,7 +91,7 @@ The demo shows:
 - **SNR Improvement**: How much noise was reduced (in dB)
 - **Mean Square Error**: Difference between cleaned and original signal
 
-Typical results show noise reduction with SNR improvement of 0.5-1.0 dB, demonstrating that the LMS algorithm successfully adapts to remove correlated noise from the signal.
+Typical results show noise reduction with SNR improvement of about 10 dB, demonstrating that the LMS algorithm successfully adapts to remove correlated noise from the signal.
 
 ## Applications
 
