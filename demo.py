@@ -41,7 +41,8 @@ def generate_signals(duration=10.0, sample_rate=1000, seed=42):
     # The LMS filter will learn to approximate this transfer function
     # Using a simple, short filter for better learning
     b = np.array([1.0, -0.5, 0.25])
-    noise = np.convolve(noise_reference, b, mode='same')
+    # Causal convolution ('full' truncated); 'same' would make noise depend on future samples
+    noise = np.convolve(noise_reference, b)[:len(t)]
     
     # Scale noise to create a moderate SNR scenario
     noise = noise * 0.5

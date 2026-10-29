@@ -34,7 +34,7 @@ def test_lms_filter_convergence():
     # Create noise reference and correlated noise
     noise_reference = np.random.randn(len(t))
     b = np.array([1.0, -0.5, 0.25])
-    noise = np.convolve(noise_reference, b, mode='same') * 0.5
+    noise = np.convolve(noise_reference, b)[:len(t)] * 0.5  # causal, so the filter can model it
     
     # Noisy signal
     noisy_signal = original_signal + noise
@@ -62,8 +62,8 @@ def test_lms_filter_convergence():
     print(f"  Output SNR: {snr_out:.2f} dB")
     print(f"  SNR improvement: {snr_improvement:.2f} dB")
     
-    # Assert that there is some noise reduction (positive or near-zero SNR improvement)
-    assert snr_improvement > -1.0, f"Expected SNR improvement > -1.0 dB, got {snr_improvement:.2f} dB"
+    # Causal noise path is fully modelable, so expect substantial noise reduction
+    assert snr_improvement > 6.0, f"Expected SNR improvement > 6.0 dB, got {snr_improvement:.2f} dB"
     print("✓ Filter convergence test passed")
 
 
@@ -84,6 +84,40 @@ def test_lms_filter_output_shapes():
     print("✓ Output shapes test passed")
 
 
+def test_lms_filter_stable_across_step_sizes_and_scales():
+    """NLMS stays bounded and converges to the true taps (b * 0.5) for representative
+    step sizes (0.5, 1.0, 1.5) and amplitudes (1, 100)"""
+    np.random.seed(0)
+    b = np.array([1.0, -0.5, 0.25])
+    for scale in [1, 100]:
+        for mu in [0.5, 1.0, 1.5]:
+            reference = np.random.randn(5000) * scale
+            desired = np.convolve(reference, b)[:5000] * 0.5
+            _, _, weights_history = LMSFilter(10, mu).filter(reference, desired)
+            assert np.abs(weights_history).max() < 10, (scale, mu)
+            assert np.allclose(weights_history[-1][:3], b * 0.5, atol=1e-3), (scale, mu)
+    print("✓ Stability test passed")
+
+
+def _raises_value_error(fn):
+    try:
+        fn()
+    except ValueError:
+        return True
+    return False
+
+
+def test_lms_filter_rejects_invalid_input():
+    """Bad constructor arguments and mismatched / non-1-D signals raise ValueError"""
+    for filter_length, step_size in [(0, 0.1), (2.5, 0.1), (10, 0), (10, 2), (10, -0.1)]:
+        assert _raises_value_error(lambda: LMSFilter(filter_length, step_size)), (filter_length, step_size)
+    lms = LMSFilter(3, 0.5)
+    assert _raises_value_error(lambda: lms.filter(np.zeros(5), np.zeros(4)))
+    assert _raises_value_error(lambda: lms.filter(np.zeros((5, 1)), np.zeros((5, 1))))
+    assert _raises_value_error(lambda: lms.filter(np.float64(1.0), np.float64(1.0)))
+    print("✓ Invalid input test passed")
+
+
 if __name__ == "__main__":
     print("Running LMS Filter Tests...")
     print()
@@ -91,6 +125,8 @@ if __name__ == "__main__":
     test_lms_filter_initialization()
     test_lms_filter_output_shapes()
     test_lms_filter_convergence()
-    
+    test_lms_filter_stable_across_step_sizes_and_scales()
+    test_lms_filter_rejects_invalid_input()
+
     print()
     print("All tests passed! ✓")
