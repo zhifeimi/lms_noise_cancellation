@@ -49,42 +49,40 @@ class LMSFilter:
             output: Filter output (estimated noise)
             weights_history: Evolution of filter weights
         """
+        reference = np.asarray(reference, dtype=float)
+        desired = np.asarray(desired, dtype=float)
+        if reference.shape != desired.shape or reference.ndim != 1:
+            raise ValueError("reference and desired must be 1-D arrays of equal length")
+
         n_samples = len(reference)
         error = np.zeros(n_samples)
         output = np.zeros(n_samples)
         weights_history = np.zeros((n_samples, self.filter_length))
-        
-        # Buffer for reference signal
-        reference_buffer = np.zeros(self.filter_length)
-        
+
+        # Zero-pad so the tap vector at time n is a slice instead of an np.roll copy
+        padded = np.concatenate([np.zeros(self.filter_length - 1), reference])
+
         # Small constant to avoid division by zero
         epsilon = 0.001
-        
-        # Leaky integrator for power estimation
-        alpha = 0.01  # Smoothing factor
-        power_estimate = 1.0
-        
+
         for n in range(n_samples):
-            # Update reference buffer (shift and add new sample)
-            reference_buffer = np.roll(reference_buffer, 1)
-            reference_buffer[0] = reference[n]
-            
+            # Tap vector [x(n), x(n-1), ..., x(n-L+1)]
+            reference_buffer = padded[n:n + self.filter_length][::-1]
+
             # Filter output (estimated noise)
             output[n] = np.dot(self.weights, reference_buffer)
-            
+
             # Error signal (desired - estimated noise = cleaned signal)
             error[n] = desired[n] - output[n]
-            
-            # Estimate power with leaky integrator for smoother adaptation
-            current_power = np.dot(reference_buffer, reference_buffer)
-            power_estimate = alpha * current_power + (1 - alpha) * power_estimate
-            
+
             # Update weights using normalized LMS algorithm
-            # w(n+1) = w(n) + (mu / (power + epsilon)) * e(n) * x(n)
-            normalization = power_estimate + epsilon
-            self.weights = self.weights + (self.step_size / normalization) * error[n] * reference_buffer
-            
+            # w(n+1) = w(n) + (mu / (||x(n)||^2 + epsilon)) * e(n) * x(n)
+            # Normalizing by the instantaneous tap power (not a smoothed estimate)
+            # is what guarantees stability for any 0 < mu < 2.
+            normalization = np.dot(reference_buffer, reference_buffer) + epsilon
+            self.weights += (self.step_size / normalization) * error[n] * reference_buffer
+
             # Store weights for analysis
-            weights_history[n] = self.weights.copy()
+            weights_history[n] = self.weights
             
         return error, output, weights_history
